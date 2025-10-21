@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Electron Bar Graph</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <h1>Bar Graph Visualizer</h1>
+
+        <div class="input-section">
+            <label for="valuesInput">Enter values (comma-separated):</label>
+            <input type="text" id="valuesInput" value="10,20,30,40" />
+            <label for="labelsInput">Enter labels (comma-separated):</label>
+            <input type="text" id="labelsInput" value="A,B,C,D" />
+            <button id="plotButton">Plot Graph</button>
+        </div>
+
+        <div class="graph-container">
+            <canvas id="barGraphCanvas" width="760" height="400"></canvas>
+        </div>
+
+        <script src="renderer.js"></script>
+    </body>
+</html>
