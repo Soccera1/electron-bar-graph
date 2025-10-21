@@ -88,3 +88,17 @@ canvas {
     border: 1px solid #e0e0e0;
     display: block; /* Remove extra space below canvas */
 }
+
+/* New style for error message */
+.error-message {
+    color: #e74c3c; /* Red color for errors */
+    background-color: #fbe6e4; /* Light red background */
+    border: 1px solid #e74c3c;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    width: fit-content;
+    text-align: center;
+    font-weight: bold;
+    display: none; /* Hidden by default */
+}

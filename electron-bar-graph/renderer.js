@@ -1,13 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
   const valuesInput = document.getElementById("valuesInput");
-  const labelsInput = document.getElementById("labelsInput"); // New: Get labels input
+  const labelsInput = document.getElementById("labelsInput");
   const plotButton = document.getElementById("plotButton");
   const canvas = document.getElementById("barGraphCanvas");
   const ctx = canvas.getContext("2d");
+  const errorMessageDiv = document.getElementById("errorMessage"); // New: Get error message div
+
+  const displayError = (message) => {
+    errorMessageDiv.textContent = message;
+    errorMessageDiv.style.display = message ? "block" : "none";
+  };
 
   const parseInputValues = () => {
+    displayError(""); // Clear previous errors
     const valueText = valuesInput.value;
-    const labelText = labelsInput.value; // New: Get label text
+    const labelText = labelsInput.value;
 
     let dataValues = [];
     let labels = [];
@@ -17,30 +24,27 @@ document.addEventListener("DOMContentLoaded", () => {
         .split(",")
         .map((x) => parseFloat(x.trim()))
         .filter((val) => !isNaN(val));
-      // Ensure all values are non-negative
       dataValues = dataValues.map((val) => Math.max(0, val));
 
-      labels = labelText.split(",").map((x) => x.trim()); // New: Parse labels
-      // Ensure labels array has the same length as dataValues, or is empty if values are empty
+      labels = labelText.split(",").map((x) => x.trim());
+
       if (dataValues.length !== labels.length) {
-        // If lengths mismatch, either truncate labels or extend with empty strings
-        if (labels.length > dataValues.length) {
-          labels = labels.slice(0, dataValues.length);
-        } else if (labels.length < dataValues.length) {
-          while (labels.length < dataValues.length) {
-            labels.push(""); // Add empty labels
-          }
-        }
+        displayError(
+          "Error: Number of values must match the number of labels.",
+        );
+        return { dataValues: [], labels: [], hasError: true }; // Indicate error
       }
     } catch (e) {
       console.error(
         "Invalid input. Please enter comma-separated numbers and labels.",
         e,
       );
+      displayError("Invalid input. Please ensure all values are numbers.");
       dataValues = [];
       labels = [];
+      return { dataValues: [], labels: [], hasError: true }; // Indicate error
     }
-    return { dataValues, labels }; // New: Return an object with both
+    return { dataValues, labels, hasError: false };
   };
 
   const drawGraph = (dataValues, labels) => {
@@ -128,12 +132,23 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   plotButton.addEventListener("click", () => {
-    const { dataValues, labels } = parseInputValues(); // New: Destructure result
-    drawGraph(dataValues, labels); // New: Pass both
+    const { dataValues, labels, hasError } = parseInputValues();
+    if (!hasError) {
+      drawGraph(dataValues, labels);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear graph on error
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
   });
 
   // Initial plot on load
-  const { dataValues: initialDataValues, labels: initialLabels } =
-    parseInputValues(); // New: Destructure initial result
-  drawGraph(initialDataValues, initialLabels); // New: Pass both
+  const {
+    dataValues: initialDataValues,
+    labels: initialLabels,
+    hasError: initialError,
+  } = parseInputValues();
+  if (!initialError) {
+    drawGraph(initialDataValues, initialLabels);
+  }
 });
