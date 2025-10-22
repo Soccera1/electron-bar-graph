@@ -16,6 +16,28 @@
             <button id="plotButton">Plot Graph</button>
         </div>
 
+        <div class="color-section">
+            <h3>Bar Colors</h3>
+            <div class="color-controls">
+                <label for="colorMode">Color Mode:</label>
+                <select id="colorMode">
+                    <option value="single">Single Color</option>
+                    <option value="gradient">Gradient</option>
+                    <option value="rainbow">Rainbow</option>
+                    <option value="custom">Custom Colors</option>
+                </select>
+                
+                <label for="primaryColor">Primary Color:</label>
+                <input type="color" id="primaryColor" value="#3498db" />
+                
+                <label for="secondaryColor" id="secondaryColorLabel" style="display: none;">Secondary Color:</label>
+                <input type="color" id="secondaryColor" value="#e74c3c" style="display: none;" />
+                
+                <label for="customColors" id="customColorsLabel" style="display: none;">Custom Colors (comma-separated hex):</label>
+                <input type="text" id="customColors" placeholder="#ff0000,#00ff00,#0000ff,#ffff00" style="display: none;" />
+            </div>
+        </div>
+
         <div class="export-section">
             <h3>Export Graph</h3>
             <button id="exportPNG">Export as PNG</button>

@@ -137,3 +137,79 @@ canvas {
 .export-section button:active {
     transform: translateY(1px);
 }
+
+.color-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.color-section h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.color-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px 20px;
+}
+
+.color-controls label {
+    font-size: 1em;
+    color: #34495e;
+    white-space: nowrap;
+}
+
+.color-controls select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    background-color: white;
+    cursor: pointer;
+}
+
+.color-controls select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.color-controls input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    background: none;
+}
+
+.color-controls input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-controls input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+.color-controls input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    width: 300px;
+}
+
+.color-controls input[type="text"]:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
