@@ -50,6 +50,7 @@ install: build
 	@echo "cd $(DATADIR) && electron . \"$\"" >> $(BINDIR)/electron-bar-graph
 	@chmod +x $(BINDIR)/electron-bar-graph
 	@echo "Installation complete!"
+	@echo "Note: You may need to run 'make install' as root for system-wide installation"
 
 # Clean targets
 clean:
