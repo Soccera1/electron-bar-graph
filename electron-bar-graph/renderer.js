@@ -381,6 +381,131 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('exportWEBP').addEventListener('click', () => exportCanvas('webp'));
   document.getElementById('exportSVG').addEventListener('click', exportSVG);
 
+  // Check if Emacs is installed and available
+  const checkEmacsInstallation = () => {
+    return new Promise((resolve, reject) => {
+      const { spawn } = require('child_process');
+      const emacs = spawn('emacs', ['--version'], {
+        stdio: 'pipe'
+      });
+      
+      let output = '';
+      let error = '';
+      
+      emacs.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      emacs.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+      
+      emacs.on('close', (code) => {
+        if (code === 0 && output.includes('GNU Emacs')) {
+          resolve(true);
+        } else {
+          reject(new Error('Emacs not found or not working properly'));
+        }
+      });
+      
+      emacs.on('error', (err) => {
+        reject(new Error(`Failed to execute emacs: ${err.message}`));
+      });
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        emacs.kill();
+        reject(new Error('Emacs check timed out'));
+      }, 5000);
+    });
+  };
+
+  // Open in Emacs functionality
+  const openInEmacs = async () => {
+    const { dataValues, labels, hasError } = parseInputValues();
+    if (hasError) {
+      displayError("Please fix input errors before opening in Emacs.");
+      return;
+    }
+
+    if (dataValues.length === 0) {
+      displayError("No data to display. Please enter some values.");
+      return;
+    }
+
+    // Check if Emacs is installed first
+    try {
+      displayError("Checking Emacs installation...");
+      await checkEmacsInstallation();
+      displayError(""); // Clear the checking message
+    } catch (error) {
+      displayError(`Emacs not found: ${error.message}. Please install Emacs and ensure it's in your PATH.`);
+      return;
+    }
+
+    // Create a temporary file with the current data
+    const data = {
+      values: dataValues,
+      labels: labels,
+      timestamp: new Date().toISOString()
+    };
+
+    // Create a script that will load the bar-graph.el and create the graph
+    const emacsScript = `
+;; Load the bar graph package
+(load-file "${process.cwd()}/bar-graph.el")
+
+;; Set the data
+(setq bar-graph-data '(${dataValues.join(' ')}))
+(setq bar-graph-labels '(${labels.map(l => `"${l}"`).join(' ')}))
+
+;; Create the ASCII graph
+(bar-graph-create-ascii bar-graph-data bar-graph-labels)
+
+;; Switch to the bar graph buffer
+(switch-to-buffer "*Bar Graph*")
+(bar-graph-mode)
+
+;; Show help message
+(message "Bar Graph loaded! Use C-c C-e to export, C-c C-n for new graph")
+`;
+
+    // Write the script to a temporary file
+    const fs = require('fs');
+    const path = require('path');
+    const tempScript = path.join(process.cwd(), 'temp-bar-graph.el');
+    
+    try {
+      fs.writeFileSync(tempScript, emacsScript);
+      
+      // Launch Emacs with the script
+      const { spawn } = require('child_process');
+      const emacs = spawn('emacs', ['--no-splash', '--load', tempScript], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      
+      emacs.unref();
+      
+      // Clean up the temporary file after a delay
+      setTimeout(() => {
+        try {
+          fs.unlinkSync(tempScript);
+        } catch (e) {
+          console.log('Could not clean up temporary file:', e.message);
+        }
+      }, 5000);
+      
+      displayError(""); // Clear any previous errors
+      
+    } catch (error) {
+      displayError(`Error launching Emacs: ${error.message}. Make sure Emacs is installed and in your PATH.`);
+    }
+  };
+
+  // Open in Emacs button event listener
+  document.getElementById('openInEmacs').addEventListener('click', openInEmacs);
+
   // Initialize color controls
   updateColorControls();
 

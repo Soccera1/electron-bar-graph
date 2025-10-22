@@ -25,8 +25,8 @@ function createWindow() {
         width: 800,
         height: 600,
         webPreferences: {
-            contextIsolation: true,
-            nodeIntegration: false
+            contextIsolation: false,
+            nodeIntegration: true
         },
         autoHideMenuBar: true,
         resizable: true,
