@@ -296,9 +296,10 @@ check_emacs() {
         log_warning "Emacs not found. Will build Emacs from source."
         build_emacs
     else
-        log_error "Emacs not found and --build-emacs not specified."
-        log_info "Use --build-emacs to build Emacs from source, or install Emacs manually."
-        exit 1
+        log_warning "Emacs not found but Emacs integration is enabled."
+        log_info "Use --build-emacs to build Emacs from source, --disable-emacs to skip, or install Emacs manually."
+        log_info "Continuing without Emacs integration..."
+        EMACS_INTEGRATION="no"
     fi
 }
 
