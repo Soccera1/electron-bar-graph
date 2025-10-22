@@ -25,6 +25,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const ctx = canvas.getContext("2d");
   const errorMessageDiv = document.getElementById("errorMessage");
   
+  // Load configuration from config.h if available
+  const loadConfiguration = () => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const configPath = path.join(process.cwd(), 'config.h');
+      
+      if (fs.existsSync(configPath)) {
+        const configContent = fs.readFileSync(configPath, 'utf8');
+        
+        // Parse EMACS_INTEGRATION
+        const emacsMatch = configContent.match(/#define EMACS_INTEGRATION\s+(\d+)/);
+        if (emacsMatch) {
+          window.EMACS_INTEGRATION = emacsMatch[1] === '1';
+        }
+        
+        // Parse DEBUG
+        const debugMatch = configContent.match(/#define DEBUG\s+(\d+)/);
+        if (debugMatch) {
+          window.DEBUG = debugMatch[1] === '1';
+        }
+        
+        // Parse VERBOSE
+        const verboseMatch = configContent.match(/#define VERBOSE\s+(\d+)/);
+        if (verboseMatch) {
+          window.VERBOSE = verboseMatch[1] === '1';
+        }
+      } else {
+        // Default configuration
+        window.EMACS_INTEGRATION = true;
+        window.DEBUG = false;
+        window.VERBOSE = false;
+      }
+    } catch (error) {
+      console.warn('Could not load configuration:', error.message);
+      // Default configuration
+      window.EMACS_INTEGRATION = true;
+      window.DEBUG = false;
+      window.VERBOSE = false;
+    }
+  };
+  
+  // Load configuration
+  loadConfiguration();
+  
+  // Show/hide Emacs section based on configuration
+  const emacsSection = document.getElementById('emacsSection');
+  if (window.EMACS_INTEGRATION) {
+    emacsSection.style.display = 'block';
+  }
+  
   // Color controls
   const colorMode = document.getElementById("colorMode");
   const primaryColor = document.getElementById("primaryColor");
@@ -36,6 +87,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const displayError = (message) => {
     errorMessageDiv.textContent = message;
     errorMessageDiv.style.display = message ? "block" : "none";
+  };
+  
+  // Debug logging function
+  const debugLog = (message, ...args) => {
+    if (window.DEBUG) {
+      console.log(`[DEBUG] ${message}`, ...args);
+    }
+  };
+  
+  // Verbose logging function
+  const verboseLog = (message, ...args) => {
+    if (window.VERBOSE) {
+      console.log(`[VERBOSE] ${message}`, ...args);
+    }
   };
 
   // Handle color mode changes
@@ -127,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const parseInputValues = () => {
+    debugLog("Parsing input values");
     displayError(""); // Clear previous errors
     const valueText = valuesInput.value;
     const labelText = labelsInput.value;
@@ -142,6 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
       dataValues = dataValues.map((val) => Math.max(0, val));
 
       labels = labelText.split(",").map((x) => x.trim());
+
+      debugLog("Parsed values:", dataValues);
+      debugLog("Parsed labels:", labels);
 
       if (dataValues.length !== labels.length) {
         displayError(
@@ -163,11 +232,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const drawGraph = (dataValues, labels) => {
+    debugLog("Drawing graph with data:", dataValues, "labels:", labels);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (dataValues.length === 0) {
+      debugLog("No data to draw");
       return;
     }
 
@@ -384,6 +455,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Check if Emacs is installed and available
   const checkEmacsInstallation = () => {
     return new Promise((resolve, reject) => {
+      // Check if Emacs integration is enabled
+      if (typeof window.EMACS_INTEGRATION !== 'undefined' && !window.EMACS_INTEGRATION) {
+        reject(new Error('Emacs integration is disabled'));
+        return;
+      }
+      
       const { spawn } = require('child_process');
       const emacs = spawn('emacs', ['--version'], {
         stdio: 'pipe'
@@ -422,6 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Open in Emacs functionality
   const openInEmacs = async () => {
+    verboseLog("Opening in Emacs");
     const { dataValues, labels, hasError } = parseInputValues();
     if (hasError) {
       displayError("Please fix input errors before opening in Emacs.");
@@ -435,10 +513,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Check if Emacs is installed first
     try {
+      verboseLog("Checking Emacs installation...");
       displayError("Checking Emacs installation...");
       await checkEmacsInstallation();
+      verboseLog("Emacs installation check passed");
       displayError(""); // Clear the checking message
     } catch (error) {
+      verboseLog("Emacs installation check failed:", error.message);
       displayError(`Emacs not found: ${error.message}. Please install Emacs and ensure it's in your PATH.`);
       return;
     }

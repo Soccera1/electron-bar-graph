@@ -6,3 +6,24 @@ bun.lockb
 
 # VSCode
 .vscode/
+
+# Build system generated files
+config.h
+Makefile
+build/
+dist/
+emacs-build/
+
+# Temporary files
+temp-bar-graph.el
+*.tmp
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
