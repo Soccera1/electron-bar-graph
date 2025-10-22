@@ -69,8 +69,45 @@ distclean: clean
 
 # Test targets
 test: build
-	@echo "Running tests..."
-	@cd $(BUILDDIR) && bun test || echo "No tests found"
+	@echo "Running comprehensive test suite..."
+	@cd $(BUILDDIR) && npm test
+	@echo "Test suite completed!"
+
+# Test targets with coverage
+test-coverage: build
+	@echo "Running tests with coverage..."
+	@cd $(BUILDDIR) && npm run test:coverage
+	@echo "Coverage report generated!"
+
+# Test targets in watch mode
+test-watch: build
+	@echo "Running tests in watch mode..."
+	@cd $(BUILDDIR) && npm run test:watch
+
+# Test specific test files
+test-unit: build
+	@echo "Running unit tests..."
+	@cd $(BUILDDIR) && npx jest tests/main.test.js tests/renderer.test.js tests/utils.test.js
+
+test-integration: build
+	@echo "Running integration tests..."
+	@cd $(BUILDDIR) && npx jest tests/integration.test.js tests/config.test.js
+
+test-e2e: build
+	@echo "Running end-to-end tests..."
+	@cd $(BUILDDIR) && npx jest tests/e2e.test.js
+
+test-performance: build
+	@echo "Running performance tests..."
+	@cd $(BUILDDIR) && npx jest tests/performance.test.js
+
+test-ui: build
+	@echo "Running UI tests..."
+	@cd $(BUILDDIR) && npx jest tests/ui.test.js
+
+test-emacs: build
+	@echo "Running Emacs integration tests..."
+	@cd $(BUILDDIR) && npx jest tests/emacs.test.js
 
 # Development targets
 dev: build
@@ -87,13 +124,21 @@ package: build
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  build     - Build the application"
-	@echo "  install   - Install the application"
-	@echo "  clean     - Clean build files"
-	@echo "  distclean - Clean all generated files"
-	@echo "  test      - Run tests"
-	@echo "  dev       - Start development server"
-	@echo "  package   - Create distribution package"
-	@echo "  help      - Show this help"
+	@echo "  build          - Build the application"
+	@echo "  install        - Install the application"
+	@echo "  clean          - Clean build files"
+	@echo "  distclean      - Clean all generated files"
+	@echo "  test           - Run comprehensive test suite"
+	@echo "  test-coverage  - Run tests with coverage report"
+	@echo "  test-watch     - Run tests in watch mode"
+	@echo "  test-unit      - Run unit tests only"
+	@echo "  test-integration - Run integration tests only"
+	@echo "  test-e2e       - Run end-to-end tests only"
+	@echo "  test-performance - Run performance tests only"
+	@echo "  test-ui        - Run UI tests only"
+	@echo "  test-emacs     - Run Emacs integration tests only"
+	@echo "  dev            - Start development server"
+	@echo "  package        - Create distribution package"
+	@echo "  help           - Show this help"
 
-.PHONY: all build install clean distclean test dev package help
+.PHONY: all build install clean distclean test test-coverage test-watch test-unit test-integration test-e2e test-performance test-ui test-emacs dev package help

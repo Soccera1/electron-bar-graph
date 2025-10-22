@@ -1,0 +1,276 @@
+/*
+ * Electron Bar Graph - A bar graph application using Electron and JavaScript.
+ * Copyright (C) 2025
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+}
+
+.input-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap to the next line */
+    align-items: center;
+    gap: 15px 25px; /* Adjust gap for better spacing with wrapping */
+}
+
+label {
+    font-size: 1.1em;
+    color: #34495e;
+}
+
+#valuesInput {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    width: 250px; /* Values input */
+}
+
+#valuesInput:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* New style for labels input */
+#labelsInput {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    width: 250px;
+}
+
+#labelsInput:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+#plotButton {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+#plotButton:hover {
+    background-color: #2980b9;
+}
+
+.graph-container {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+canvas {
+    border: 1px solid #e0e0e0;
+    display: block; /* Remove extra space below canvas */
+}
+
+/* New style for error message */
+.error-message {
+    color: #e74c3c; /* Red color for errors */
+    background-color: #fbe6e4; /* Light red background */
+    border: 1px solid #e74c3c;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    width: fit-content;
+    text-align: center;
+    font-weight: bold;
+    display: none; /* Hidden by default */
+}
+
+.export-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.export-section h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.export-section button {
+    padding: 8px 16px;
+    margin: 0 5px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.export-section button:hover {
+    background-color: #229954;
+}
+
+.export-section button:active {
+    transform: translateY(1px);
+}
+
+.color-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.color-section h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.color-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px 20px;
+}
+
+.color-controls label {
+    font-size: 1em;
+    color: #34495e;
+    white-space: nowrap;
+}
+
+.color-controls select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    background-color: white;
+    cursor: pointer;
+}
+
+.color-controls select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.color-controls input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    background: none;
+}
+
+.color-controls input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-controls input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+.color-controls input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    width: 300px;
+}
+
+.color-controls input[type="text"]:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.emacs-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    text-align: center;
+    border: 2px solid #8e44ad;
+}
+
+.emacs-section h3 {
+    color: #8e44ad;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.emacs-section button {
+    background-color: #8e44ad;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.emacs-section button:hover {
+    background-color: #7d3c98;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);
+}
+
+.emacs-help {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+    font-style: italic;
+}
