@@ -6,15 +6,19 @@ function createWindow() {
         width: 800,
         height: 600,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'), // Using a preload script for security
-            contextIsolation: true, // Recommended for security
-            nodeIntegration: false // Recommended for security
-        }
+            contextIsolation: true,
+            nodeIntegration: false
+        },
+        autoHideMenuBar: true,
+        resizable: true,
+        minimizable: true,
+        maximizable: true
     });
 
+    // Remove the default menu completely
+    win.setMenu(null);
+
     win.loadFile('index.html');
-    // Open the DevTools.
-    // win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {

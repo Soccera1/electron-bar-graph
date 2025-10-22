@@ -142,6 +142,108 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Export functionality
+  const exportCanvas = (format) => {
+    let dataURL;
+    let filename;
+    
+    switch (format) {
+      case 'png':
+        dataURL = canvas.toDataURL('image/png');
+        filename = 'bar-graph.png';
+        break;
+      case 'jpeg':
+        dataURL = canvas.toDataURL('image/jpeg', 0.9);
+        filename = 'bar-graph.jpg';
+        break;
+      case 'webp':
+        dataURL = canvas.toDataURL('image/webp', 0.9);
+        filename = 'bar-graph.webp';
+        break;
+      default:
+        return;
+    }
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportSVG = () => {
+    const { dataValues, labels } = parseInputValues();
+    if (dataValues.length === 0) return;
+
+    const svgWidth = 760;
+    const svgHeight = 400;
+    const topPadding = 30;
+    const bottomPadding = 40;
+    const sidePadding = 30;
+    const graphWidth = svgWidth - 2 * sidePadding;
+    const graphHeight = svgHeight - topPadding - bottomPadding;
+
+    const numBars = dataValues.length;
+    const barSpacing = 10;
+    const availableWidthForBars = graphWidth - (numBars - 1) * barSpacing;
+    const barWidth = availableWidthForBars / numBars;
+    const maxValue = Math.max(...dataValues);
+    const scale = graphHeight / (maxValue > 0 ? maxValue : 1);
+
+    let svgContent = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
+    
+    // Background
+    svgContent += `<rect width="${svgWidth}" height="${svgHeight}" fill="white"/>`;
+    
+    // Bars
+    let xOffset = sidePadding;
+    for (let i = 0; i < dataValues.length; i++) {
+      const value = dataValues[i];
+      const barHeight = value * scale;
+      const y = svgHeight - bottomPadding - barHeight;
+      
+      svgContent += `<rect x="${xOffset}" y="${y}" width="${barWidth}" height="${barHeight}" fill="rgba(52, 152, 219, 0.8)"/>`;
+      
+      // Labels
+      if (labels && labels[i] !== undefined) {
+        const textX = xOffset + barWidth / 2;
+        const textY = svgHeight - bottomPadding + 20;
+        svgContent += `<text x="${textX}" y="${textY}" text-anchor="middle" font-family="Arial" font-size="12" fill="black">${labels[i]}</text>`;
+      }
+      
+      xOffset += barWidth + barSpacing;
+    }
+    
+    // Axes
+    svgContent += `<line x1="${sidePadding}" y1="${svgHeight - bottomPadding}" x2="${svgWidth - sidePadding}" y2="${svgHeight - bottomPadding}" stroke="black" stroke-width="2"/>`;
+    svgContent += `<line x1="${sidePadding}" y1="${topPadding}" x2="${sidePadding}" y2="${svgHeight - bottomPadding}" stroke="black" stroke-width="2"/>`;
+    
+    // Y-axis labels
+    svgContent += `<text x="${sidePadding - 10}" y="${topPadding}" text-anchor="end" dominant-baseline="middle" font-family="Arial" font-size="12" fill="black">${maxValue.toFixed(1)}</text>`;
+    svgContent += `<text x="${sidePadding - 10}" y="${svgHeight - bottomPadding}" text-anchor="end" dominant-baseline="middle" font-family="Arial" font-size="12" fill="black">0</text>`;
+    
+    svgContent += '</svg>';
+    
+    // Download SVG
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'bar-graph.svg';
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Export button event listeners
+  document.getElementById('exportPNG').addEventListener('click', () => exportCanvas('png'));
+  document.getElementById('exportJPEG').addEventListener('click', () => exportCanvas('jpeg'));
+  document.getElementById('exportWEBP').addEventListener('click', () => exportCanvas('webp'));
+  document.getElementById('exportSVG').addEventListener('click', exportSVG);
+
   // Initial plot on load
   const {
     dataValues: initialDataValues,
