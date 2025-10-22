@@ -1,0 +1,249 @@
+name: Create Release on Push (GitHub)
+
+on:
+  push:
+    branches:
+      - master # or your default branch, e.g., main
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential rsync
+          # Install Electron dependencies for headless testing
+          sudo apt-get install -y xvfb
+
+      - name: Build project for Linux
+        run: |
+          ./configure
+          make build
+        working-directory: ${{ github.workspace }}
+
+      - name: Run tests
+        run: make test
+        working-directory: ${{ github.workspace }}
+        env:
+          DISPLAY: ':99.0'
+
+      - name: Create distribution package
+        run: make package
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-bar-graph-linux-amd64
+          path: dist/electron-bar-graph-release.tar.gz
+
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install build dependencies
+        run: |
+          choco install make --limit-features
+          choco install rsync --limit-features
+        shell: powershell
+
+      - name: Build project for Windows
+        run: |
+          bash ./configure
+          make build
+        working-directory: ${{ github.workspace }}
+        shell: bash
+
+      - name: Run tests
+        run: make test
+        working-directory: ${{ github.workspace }}
+        shell: bash
+
+      - name: Create distribution package
+        run: make package
+        working-directory: ${{ github.workspace }}
+        shell: bash
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-bar-graph-windows-amd64
+          path: dist/electron-bar-graph-release.tar.gz
+
+  build_macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install build dependencies
+        run: |
+          brew install make rsync
+
+      - name: Build project for macOS
+        run: |
+          ./configure
+          make build
+        working-directory: ${{ github.workspace }}
+
+      - name: Run tests
+        run: make test
+        working-directory: ${{ github.workspace }}
+
+      - name: Create distribution package
+        run: make package
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-bar-graph-macos-amd64
+          path: dist/electron-bar-graph-release.tar.gz
+
+  create_release_and_upload_assets:
+    runs-on: ubuntu-latest
+    needs: [build_linux, build_windows, build_macos] # Depends on all build jobs to complete
+    permissions:
+      contents: write # Grant write permissions to the GITHUB_TOKEN for creating releases
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get latest unique tag
+        id: get_tag
+        run: |
+          LATEST_TAG=$(git tag --sort=-v:refname | head -n1 || echo "v0.0.0")
+          echo "Debug: Initial LATEST_TAG: $LATEST_TAG"
+          NEW_TAG=""
+          
+          if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR=${BASH_REMATCH[1]}
+            MINOR=${BASH_REMATCH[2]}
+            PATCH=${BASH_REMATCH[3]}
+            echo "Debug: Parsed: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
+            
+            while : ; do
+              PATCH=$((PATCH + 1))
+              CANDIDATE_TAG="v$MAJOR.$MINOR.$PATCH"
+              echo "Debug: Trying CANDIDATE_TAG: $CANDIDATE_TAG"
+              if ! git rev-parse "$CANDIDATE_TAG" >/dev/null 2>&1; then
+                NEW_TAG=$CANDIDATE_TAG
+                echo "Debug: Found NEW_TAG: $NEW_TAG (unused)"
+                break
+              fi
+            done
+          else
+            NEW_TAG="v1.0.0"
+            echo "Debug: No previous semver tags found. Setting NEW_TAG: $NEW_TAG"
+          fi
+          
+          echo "Debug: Final LATEST_TAG for ENV: $LATEST_TAG"
+          echo "Debug: Final NEW_TAG for ENV: $NEW_TAG"
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use the default GITHUB_TOKEN
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          release_name: Electron Bar Graph ${{ env.NEW_TAG }}
+          body: |
+            Automated release of Electron Bar Graph created on push.
+            
+            ## Changes
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            
+            ## Downloads
+            - **Linux**: electron-bar-graph-${{ env.NEW_TAG }}-linux-amd64.tar.gz
+            - **Windows**: electron-bar-graph-${{ env.NEW_TAG }}-windows-amd64.tar.gz  
+            - **macOS**: electron-bar-graph-${{ env.NEW_TAG }}-macos-amd64.tar.gz
+            
+            ## Installation
+            1. Download the appropriate package for your platform
+            2. Extract the archive: `tar -xzf electron-bar-graph-*.tar.gz`
+            3. Run the application: `electron .` (requires Electron to be installed)
+          draft: false
+          prerelease: false
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-bar-graph-linux-amd64
+          path: ./artifacts/linux/
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-bar-graph-windows-amd64
+          path: ./artifacts/windows/
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-bar-graph-macos-amd64
+          path: ./artifacts/macos/
+
+      - name: Upload Linux Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/linux/electron-bar-graph-release.tar.gz
+          asset_name: electron-bar-graph-${{ env.NEW_TAG }}-linux-amd64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/windows/electron-bar-graph-release.tar.gz
+          asset_name: electron-bar-graph-${{ env.NEW_TAG }}-windows-amd64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload macOS Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/macos/electron-bar-graph-release.tar.gz
+          asset_name: electron-bar-graph-${{ env.NEW_TAG }}-macos-amd64.tar.gz
+          asset_content_type: application/gzip
