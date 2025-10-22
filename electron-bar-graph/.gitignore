@@ -3,3 +3,6 @@ node_modules/
 
 # Bun lock file
 bun.lockb
+
+# VSCode
+.vscode/
