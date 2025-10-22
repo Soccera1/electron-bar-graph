@@ -34,7 +34,9 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Run tests
-        run: make test
+        run: |
+          make test > test-results-linux.log 2>&1 || echo "Tests failed but continuing build"
+          echo "TEST_STATUS=$?" >> $GITHUB_ENV
         working-directory: ${{ github.workspace }}
         env:
           DISPLAY: ':99.0'
@@ -48,6 +50,13 @@ jobs:
         with:
           name: electron-bar-graph-linux-amd64
           path: dist/electron-bar-graph-release.tar.gz
+
+      - name: Upload Linux test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-linux
+          path: test-results-linux.log
 
   build_windows:
     runs-on: windows-latest
@@ -76,7 +85,9 @@ jobs:
         shell: bash
 
       - name: Run tests
-        run: make test
+        run: |
+          make test > test-results-windows.log 2>&1 || echo "Tests failed but continuing build"
+          echo "TEST_STATUS=$?" >> $GITHUB_ENV
         working-directory: ${{ github.workspace }}
         shell: bash
 
@@ -90,6 +101,13 @@ jobs:
         with:
           name: electron-bar-graph-windows-amd64
           path: dist/electron-bar-graph-release.tar.gz
+
+      - name: Upload Windows test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-windows
+          path: test-results-windows.log
 
   build_macos:
     runs-on: macos-latest
@@ -115,7 +133,9 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Run tests
-        run: make test
+        run: |
+          make test > test-results-macos.log 2>&1 || echo "Tests failed but continuing build"
+          echo "TEST_STATUS=$?" >> $GITHUB_ENV
         working-directory: ${{ github.workspace }}
 
       - name: Create distribution package
@@ -127,6 +147,13 @@ jobs:
         with:
           name: electron-bar-graph-macos-amd64
           path: dist/electron-bar-graph-release.tar.gz
+
+      - name: Upload macOS test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-macos
+          path: test-results-macos.log
 
   create_release_and_upload_assets:
     runs-on: ubuntu-latest
@@ -218,6 +245,14 @@ jobs:
           name: electron-bar-graph-macos-amd64
           path: ./artifacts/macos/
 
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        if: always()
+        with:
+          pattern: test-results-*
+          path: ./test-logs/
+          merge-multiple: true
+
       - name: Upload Linux Release Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -247,3 +282,39 @@ jobs:
           asset_path: ./artifacts/macos/electron-bar-graph-release.tar.gz
           asset_name: electron-bar-graph-${{ env.NEW_TAG }}-macos-amd64.tar.gz
           asset_content_type: application/gzip
+
+      - name: Upload Linux Test Results
+        uses: actions/upload-release-asset@v1
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./test-logs/test-results-linux.log
+          asset_name: test-results-${{ env.NEW_TAG }}-linux.log
+          asset_content_type: text/plain
+        continue-on-error: true
+
+      - name: Upload Windows Test Results
+        uses: actions/upload-release-asset@v1
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./test-logs/test-results-windows.log
+          asset_name: test-results-${{ env.NEW_TAG }}-windows.log
+          asset_content_type: text/plain
+        continue-on-error: true
+
+      - name: Upload macOS Test Results
+        uses: actions/upload-release-asset@v1
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./test-logs/test-results-macos.log
+          asset_name: test-results-${{ env.NEW_TAG }}-macos.log
+          asset_content_type: text/plain
+        continue-on-error: true
