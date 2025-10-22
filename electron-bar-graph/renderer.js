@@ -4,11 +4,107 @@ document.addEventListener("DOMContentLoaded", () => {
   const plotButton = document.getElementById("plotButton");
   const canvas = document.getElementById("barGraphCanvas");
   const ctx = canvas.getContext("2d");
-  const errorMessageDiv = document.getElementById("errorMessage"); // New: Get error message div
+  const errorMessageDiv = document.getElementById("errorMessage");
+  
+  // Color controls
+  const colorMode = document.getElementById("colorMode");
+  const primaryColor = document.getElementById("primaryColor");
+  const secondaryColor = document.getElementById("secondaryColor");
+  const secondaryColorLabel = document.getElementById("secondaryColorLabel");
+  const customColors = document.getElementById("customColors");
+  const customColorsLabel = document.getElementById("customColorsLabel");
 
   const displayError = (message) => {
     errorMessageDiv.textContent = message;
     errorMessageDiv.style.display = message ? "block" : "none";
+  };
+
+  // Handle color mode changes
+  const updateColorControls = () => {
+    const mode = colorMode.value;
+    
+    // Hide all optional controls first
+    secondaryColor.style.display = "none";
+    secondaryColorLabel.style.display = "none";
+    customColors.style.display = "none";
+    customColorsLabel.style.display = "none";
+    
+    // Show relevant controls based on mode
+    if (mode === "gradient") {
+      secondaryColor.style.display = "inline-block";
+      secondaryColorLabel.style.display = "inline-block";
+    } else if (mode === "custom") {
+      customColors.style.display = "inline-block";
+      customColorsLabel.style.display = "inline-block";
+    }
+  };
+
+  // Generate colors based on mode
+  const generateColors = (count) => {
+    const mode = colorMode.value;
+    const primary = primaryColor.value;
+    const secondary = secondaryColor.value;
+    
+    switch (mode) {
+      case "single":
+        return Array(count).fill(primary);
+        
+      case "gradient":
+        return generateGradientColors(primary, secondary, count);
+        
+      case "rainbow":
+        return generateRainbowColors(count);
+        
+      case "custom":
+        const customColorList = customColors.value.split(",").map(c => c.trim());
+        if (customColorList.length >= count) {
+          return customColorList.slice(0, count);
+        } else {
+          // Repeat colors if not enough provided
+          const colors = [];
+          for (let i = 0; i < count; i++) {
+            colors.push(customColorList[i % customColorList.length]);
+          }
+          return colors;
+        }
+        
+      default:
+        return Array(count).fill(primary);
+    }
+  };
+
+  const generateGradientColors = (color1, color2, steps) => {
+    const colors = [];
+    const c1 = hexToRgb(color1);
+    const c2 = hexToRgb(color2);
+    
+    for (let i = 0; i < steps; i++) {
+      const ratio = steps === 1 ? 0 : i / (steps - 1);
+      const r = Math.round(c1.r + (c2.r - c1.r) * ratio);
+      const g = Math.round(c1.g + (c2.g - c1.g) * ratio);
+      const b = Math.round(c1.b + (c2.b - c1.b) * ratio);
+      colors.push(`rgb(${r}, ${g}, ${b})`);
+    }
+    
+    return colors;
+  };
+
+  const generateRainbowColors = (count) => {
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+      const hue = (i * 360) / count;
+      colors.push(`hsl(${hue}, 70%, 50%)`);
+    }
+    return colors;
+  };
+
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
   };
 
   const parseInputValues = () => {
@@ -48,8 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const drawGraph = (dataValues, labels) => {
-    // New: Added labels parameter
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -58,32 +153,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const topPadding = 30;
-    const bottomPadding = 40; // Increased padding for labels
+    const bottomPadding = 40;
     const sidePadding = 30;
 
     const graphWidth = canvas.width - 2 * sidePadding;
-    const graphHeight = canvas.height - topPadding - bottomPadding; // Adjusted graph height
+    const graphHeight = canvas.height - topPadding - bottomPadding;
 
     const numBars = dataValues.length;
-    const barSpacing = 10; // Pixels between bars
+    const barSpacing = 10;
     let barWidth;
     if (numBars > 0) {
       const availableWidthForBars = graphWidth - (numBars - 1) * barSpacing;
       barWidth = availableWidthForBars / numBars;
     } else {
-      barWidth = 0; // No bars, no width
+      barWidth = 0;
     }
-    if (barWidth <= 0) barWidth = 1; // Ensure minimum bar width
+    if (barWidth <= 0) barWidth = 1;
 
     const maxValue = Math.max(...dataValues);
-    const scale = graphHeight / (maxValue > 0 ? maxValue : 1); // Avoid division by zero
+    const scale = graphHeight / (maxValue > 0 ? maxValue : 1);
 
-    // Draw bars
-    ctx.fillStyle = "rgba(52, 152, 219, 0.8)"; // Blue color for bars
+    // Generate colors for bars
+    const barColors = generateColors(dataValues.length);
+
+    // Draw bars with custom colors
     let xOffset = sidePadding;
     for (let i = 0; i < dataValues.length; i++) {
       const value = dataValues[i];
       const barHeight = value * scale;
+      
+      // Set bar color
+      ctx.fillStyle = barColors[i];
       ctx.fillRect(
         xOffset,
         canvas.height - bottomPadding - barHeight,
@@ -91,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
         barHeight,
       );
 
-      // Draw label for the bar (New logic)
+      // Draw label for the bar
       if (labels && labels[i] !== undefined) {
         ctx.fillStyle = "black";
         ctx.font = "12px Arial";
@@ -192,19 +292,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxValue = Math.max(...dataValues);
     const scale = graphHeight / (maxValue > 0 ? maxValue : 1);
 
+    // Generate colors for SVG export
+    const barColors = generateColors(dataValues.length);
+
     let svgContent = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
     
     // Background
     svgContent += `<rect width="${svgWidth}" height="${svgHeight}" fill="white"/>`;
     
-    // Bars
+    // Bars with custom colors
     let xOffset = sidePadding;
     for (let i = 0; i < dataValues.length; i++) {
       const value = dataValues[i];
       const barHeight = value * scale;
       const y = svgHeight - bottomPadding - barHeight;
       
-      svgContent += `<rect x="${xOffset}" y="${y}" width="${barWidth}" height="${barHeight}" fill="rgba(52, 152, 219, 0.8)"/>`;
+      svgContent += `<rect x="${xOffset}" y="${y}" width="${barWidth}" height="${barHeight}" fill="${barColors[i]}"/>`;
       
       // Labels
       if (labels && labels[i] !== undefined) {
@@ -238,11 +341,29 @@ document.addEventListener("DOMContentLoaded", () => {
     URL.revokeObjectURL(url);
   };
 
+  // Event listeners
+  colorMode.addEventListener('change', updateColorControls);
+  primaryColor.addEventListener('change', () => {
+    const { dataValues, labels, hasError } = parseInputValues();
+    if (!hasError) drawGraph(dataValues, labels);
+  });
+  secondaryColor.addEventListener('change', () => {
+    const { dataValues, labels, hasError } = parseInputValues();
+    if (!hasError) drawGraph(dataValues, labels);
+  });
+  customColors.addEventListener('input', () => {
+    const { dataValues, labels, hasError } = parseInputValues();
+    if (!hasError) drawGraph(dataValues, labels);
+  });
+
   // Export button event listeners
   document.getElementById('exportPNG').addEventListener('click', () => exportCanvas('png'));
   document.getElementById('exportJPEG').addEventListener('click', () => exportCanvas('jpeg'));
   document.getElementById('exportWEBP').addEventListener('click', () => exportCanvas('webp'));
   document.getElementById('exportSVG').addEventListener('click', exportSVG);
+
+  // Initialize color controls
+  updateColorControls();
 
   // Initial plot on load
   const {
