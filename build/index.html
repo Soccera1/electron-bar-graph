@@ -1,0 +1,81 @@
+<!--
+  Electron Bar Graph - A bar graph application using Electron and JavaScript.
+  Copyright (C) 2025
+  SPDX-License-Identifier: AGPL-3.0-or-later
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Electron Bar Graph</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <h1>Bar Graph Visualizer</h1>
+
+        <div class="input-section">
+            <label for="valuesInput">Enter values (comma-separated):</label>
+            <input type="text" id="valuesInput" value="10,20,30,40" />
+            <label for="labelsInput">Enter labels (comma-separated):</label>
+            <input type="text" id="labelsInput" value="A,B,C,D" />
+            <button id="plotButton">Plot Graph</button>
+        </div>
+
+        <div class="color-section">
+            <h3>Bar Colors</h3>
+            <div class="color-controls">
+                <label for="colorMode">Color Mode:</label>
+                <select id="colorMode">
+                    <option value="single">Single Color</option>
+                    <option value="gradient">Gradient</option>
+                    <option value="rainbow">Rainbow</option>
+                    <option value="custom">Custom Colors</option>
+                </select>
+                
+                <label for="primaryColor">Primary Color:</label>
+                <input type="color" id="primaryColor" value="#3498db" />
+                
+                <label for="secondaryColor" id="secondaryColorLabel" style="display: none;">Secondary Color:</label>
+                <input type="color" id="secondaryColor" value="#e74c3c" style="display: none;" />
+                
+                <label for="customColors" id="customColorsLabel" style="display: none;">Custom Colors (comma-separated hex):</label>
+                <input type="text" id="customColors" placeholder="#ff0000,#00ff00,#0000ff,#ffff00" style="display: none;" />
+            </div>
+        </div>
+
+        <div class="export-section">
+            <h3>Export Graph</h3>
+            <button id="exportPNG">Export as PNG</button>
+            <button id="exportJPEG">Export as JPEG</button>
+            <button id="exportWEBP">Export as WEBP</button>
+            <button id="exportSVG">Export as SVG</button>
+        </div>
+
+        <div class="emacs-section" id="emacsSection" style="display: none;">
+            <h3>Open in Emacs</h3>
+            <button id="openInEmacs">Open in Emacs</button>
+            <p class="emacs-help">This will open the current graph data in Emacs with ASCII visualization and export capabilities.</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="graph-container">
+            <canvas id="barGraphCanvas" width="760" height="400"></canvas>
+        </div>
+
+        <script src="renderer.js"></script>
+    </body>
+</html>

@@ -1,8 +1,15 @@
-# Node modules
+# Bun dependencies
 node_modules/
 
-# Bun lock file
+# Bun lock files
 bun.lockb
+bun.lock
+
+# Node.js files (not used in this project)
+package-lock.json
+yarn.lock
+.npmrc
+.nvmrc
 
 # VSCode
 .vscode/
@@ -14,10 +21,40 @@ build/
 dist/
 emacs-build/
 
+# Test artifacts
+coverage/
+.nyc_output/
+test-results/
+junit.xml
+
+# Jest cache
+.jest-cache/
+
+# Test coverage reports
+coverage/
+lcov.info
+*.lcov
+
 # Temporary files
 temp-bar-graph.el
 *.tmp
 *.log
+
+# Electron build artifacts
+out/
+app/
+packages/
+*.dmg
+*.exe
+*.deb
+*.rpm
+*.AppImage
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -27,3 +64,38 @@ temp-bar-graph.el
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+bun-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Bun cache
+.bun-cache/
+
+# Optional eslint cache
+.eslintcache
+
+# Bun build output
+bun.lockb
+
+# Bun build artifacts
+*.tgz
+.bun/
+
+# Temporary folders
+tmp/
+temp/
