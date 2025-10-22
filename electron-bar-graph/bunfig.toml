@@ -1,0 +1,11 @@
+[test]
+# Test configuration for Bun
+preload = ["./tests/test-utils.js"]
+timeout = 5000
+
+# Coverage configuration
+coverage = true
+coverageDir = "./coverage"
+
+# Test environment
+env = "test"

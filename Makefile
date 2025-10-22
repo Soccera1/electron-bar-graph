@@ -35,7 +35,7 @@ all: build
 build: $(CONFIG_H)
 	@echo "Building Electron Bar Graph..."
 	@mkdir -p $(BUILDDIR)
-	@cp -r $(SRCDIR)/* $(BUILDDIR)/
+	@rsync -a --exclude=node_modules $(SRCDIR)/ $(BUILDDIR)/ 2>/dev/null || cp -r $(SRCDIR)/* $(BUILDDIR)/ 2>/dev/null || true
 	@cp $(CONFIG_H) $(BUILDDIR)/
 	@cd $(BUILDDIR) && bun install
 	@echo "Build complete!"
@@ -68,9 +68,27 @@ distclean: clean
 	@echo "Distclean complete!"
 
 # Test targets
-test: build
-	@echo "Running tests..."
-	@cd $(BUILDDIR) && bun test || echo "No tests found"
+test: test-build test-unit
+
+test-unit: build
+	@echo "🧪 Running JavaScript unit tests..."
+	@cd $(BUILDDIR) && bun test
+
+test-build:
+	@echo "🔧 Running build system tests..."
+	@if [ -f "test-configure.sh" ]; then \
+		chmod +x test-configure.sh && ./test-configure.sh; \
+	else \
+		echo "⚠️  test-configure.sh not found, skipping build system tests"; \
+	fi
+
+test-coverage: build
+	@echo "📊 Running tests with coverage..."
+	@cd $(BUILDDIR) && bun test --coverage
+
+test-watch: build
+	@echo "👀 Running tests in watch mode..."
+	@cd $(BUILDDIR) && bun test --watch
 
 # Development targets
 dev: build
@@ -87,13 +105,17 @@ package: build
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  build     - Build the application"
-	@echo "  install   - Install the application"
-	@echo "  clean     - Clean build files"
-	@echo "  distclean - Clean all generated files"
-	@echo "  test      - Run tests"
-	@echo "  dev       - Start development server"
-	@echo "  package   - Create distribution package"
-	@echo "  help      - Show this help"
+	@echo "  build        - Build the application"
+	@echo "  install      - Install the application"
+	@echo "  clean        - Clean build files"
+	@echo "  distclean    - Clean all generated files"
+	@echo "  test         - Run all tests (build + unit tests)"
+	@echo "  test-unit    - Run JavaScript unit tests only"
+	@echo "  test-build   - Run build system tests only"
+	@echo "  test-coverage- Run tests with coverage report"
+	@echo "  test-watch   - Run tests in watch mode"
+	@echo "  dev          - Start development server"
+	@echo "  package      - Create distribution package"
+	@echo "  help         - Show this help"
 
-.PHONY: all build install clean distclean test dev package help
+.PHONY: all build install clean distclean test test-unit test-build test-coverage test-watch dev package help
