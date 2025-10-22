@@ -67,6 +67,15 @@ else
     exit 1
 fi
 
+# Test 7: Root check for Emacs build
+echo "Test 7: Root check for Emacs build"
+if ./configure --build-emacs --prefix=/tmp/test 2>&1 | grep -q "Building Emacs requires root privileges"; then
+    echo "✓ Root check works correctly"
+else
+    echo "✗ Root check failed"
+    exit 1
+fi
+
 echo ""
 echo "All tests passed! ✓"
 echo "The configure script is working correctly."

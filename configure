@@ -56,7 +56,7 @@ Options:
   --datadir=DIR          Data directory (default: \$prefix/share/electron-bar-graph)
   --enable-emacs         Enable Emacs integration (default: yes)
   --disable-emacs        Disable Emacs integration
-  --build-emacs          Build Emacs from source if not found
+  --build-emacs          Build Emacs from source if not found (requires root)
   --emacs-prefix=DIR     Emacs installation prefix (default: \$prefix)
   --node-version=VER     Node.js version to use (default: 18)
   --bun-version=VER      Bun version to use (default: latest)
@@ -68,7 +68,7 @@ Options:
 Examples:
   $0 --prefix=/opt/electron-bar-graph
   $0 --disable-emacs --build-type=debug
-  $0 --build-emacs --emacs-prefix=/usr/local/emacs
+  sudo $0 --build-emacs --emacs-prefix=/usr/local/emacs
 
 EOF
 }
@@ -132,6 +132,16 @@ parse_args() {
 # Check if command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# Check if running as root
+check_root() {
+    if [[ "$EMACS_BUILD" == "yes" && "$EUID" -ne 0 ]]; then
+        log_error "Building Emacs requires root privileges."
+        log_info "Please run the configure script as root:"
+        log_info "  sudo ./configure --build-emacs [other options]"
+        exit 1
+    fi
 }
 
 # Check system dependencies
@@ -233,11 +243,11 @@ install_nodejs() {
     log_info "Installing Node.js $NODE_VERSION..."
     
     if command_exists curl; then
-        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
+        apt-get install -y nodejs
     elif command_exists wget; then
-        wget -qO- https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        wget -qO- https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
+        apt-get install -y nodejs
     else
         log_error "Neither curl nor wget found. Cannot install Node.js automatically."
         log_info "Please install Node.js manually and run configure again."
@@ -383,11 +393,11 @@ build_emacs() {
     
     # Install Emacs
     log_info "Installing Emacs..."
-    sudo make install
+    make install
     
     # Create symlink if needed
     if [[ ! -f "/usr/local/bin/emacs" ]]; then
-        sudo ln -sf "$emacs_install_dir/bin/emacs" /usr/local/bin/emacs
+        ln -sf "$emacs_install_dir/bin/emacs" /usr/local/bin/emacs
     fi
     
     log_success "Emacs built and installed successfully"
@@ -485,6 +495,7 @@ install: build
 	@echo "cd \$(DATADIR) && electron . \"\$$@\"" >> \$(BINDIR)/electron-bar-graph
 	@chmod +x \$(BINDIR)/electron-bar-graph
 	@echo "Installation complete!"
+	@echo "Note: You may need to run 'make install' as root for system-wide installation"
 
 # Clean targets
 clean:
@@ -543,6 +554,9 @@ main() {
     
     # Parse command line arguments
     parse_args "$@"
+    
+    # Check if root is required for Emacs build
+    check_root
     
     # Check dependencies
     check_dependencies

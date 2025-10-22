@@ -16,13 +16,21 @@ The build system provides:
 # Basic build
 ./configure
 make
-make install
+sudo make install
 
 # Build with custom options
 ./configure --prefix=/opt/electron-bar-graph --enable-debug
 make
-make install
+sudo make install
 ```
+
+## Root Requirements
+
+The configure script requires root privileges in the following cases:
+- **Building Emacs from source** (`--build-emacs`): Requires root to install system packages and compile Emacs
+- **System-wide installation**: Installing to system directories (like `/usr/local`) requires root
+
+For other operations (checking dependencies, building the application), root is not required.
 
 ## Configure Script Options
 
@@ -94,7 +102,7 @@ make install
 
 ### Build Emacs from Source
 ```bash
-./configure --build-emacs --emacs-prefix=/usr/local/emacs
+sudo ./configure --build-emacs --emacs-prefix=/usr/local/emacs
 make
 sudo make install
 ```
